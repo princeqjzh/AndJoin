@@ -16,6 +16,9 @@ limitations under the License.
 
 @author: Diego Torres Milano
 """
+import logging
+from subprocess import check_output
+from fw.TestUtil import Shell, MONKEYTEST_LOG_FILE, printLog
 
 __version__ = '10.3.4'
 
@@ -162,6 +165,9 @@ class AdbClient:
             self.__setTransport()
             self.build[VERSION_SDK_PROPERTY] = int(self.__getProp(VERSION_SDK_PROPERTY))
             self.initDisplayProperties()
+
+        self.sh = Shell()
+        ''' added by Xinquan Wang to integrate this module with Andjoin framework'''
 
     @staticmethod
     def setAlarm(timeout):
@@ -1060,6 +1066,182 @@ class AdbClient:
         }
         return string.Template(template).substitute(_map)
 
+    # below methods are added by Xinquan Wang. 2015-09-15
+    def updateApp(self):
+        """ abstract function to update an installed App on device"""
+        raise AssertionError("updateApp() is a abstract function, you need to implement it in your class.")
+
+    def runMonkeyTest(self, pkgName, count):
+        """
+        run Monkey test
+        @param pkgName: the package name of the app
+        @param count: the sample test count
+        @return: boolean (True for pass and False for fail)
+        """
+        if os.path.isfile(MONKEYTEST_LOG_FILE):
+            os.remove(MONKEYTEST_LOG_FILE)
+        args = 'monkey -p {} -s 2 --throttle 300 --pct-touch 50 --pct-motion 20 --pct-trackball 20 ' \
+               '--pct-syskeys 10 {} > {}'.format(pkgName, count, MONKEYTEST_LOG_FILE)
+        self.getAdbCmdOutput('shell', args)
+        exception = scanExceptionInLog(MONKEYTEST_LOG_FILE)
+        if exception == '':
+            os.remove(MONKEYTEST_LOG_FILE)
+            return True
+        else:
+            return False
+
+    def getAdbCmdOutput(self, action, args):
+        """execute ADB command and return the stdout in string
+        @param action: the ADB action (string)
+        @param args: the command arguments (string)
+        @return: string
+        """
+        return self.sh.getShellCmdOutput('adb ' + action + ' ' + args)  # single device mode
+
+    def runAdbCmd(self, action, args):
+        """execute ADB command and return result in integer
+        @param action: the ADB action (string)
+        @param args: the command arguments (string)
+        @return:integer (0 for success or 1 for failure)
+        """
+        return self.sh.runShellCmd('adb %s %s' % (action, args))
+        # return callCmd('adb -s %s %s' % (self.deviceId, action, args))  # multi-device mode
+
+    def installApp(self, apkName):
+        """install an App
+        @param apkName: the .apk filename
+        @return: integer (0 for success or 1 for failure)
+        """
+        printLog("Installing app from %s..." % apkName)
+        return self.runAdbCmd('install', apkName)
+
+    def upgradeApp(self, apkName):
+        """upgrade an App
+        @param apkName: the .apk filename
+        @return: integer (0 for success or 1 for failure)
+        """
+        printLog("upgrading app from %s..." % apkName)
+        return self.runAdbCmd('install', '-r ' + apkName)
+
+    def pushFile(self, src, tgt):
+        """push a file to the target path on the device
+        @param src: the source file path (string)
+        @param tgt: the target file path (string)
+        @return: boolean (True for success or False for failure)
+        """
+        return self.runAdbCmd('push', '%s %s' % (src, tgt))
+
+    def pullFile(self, src, tgt='.'):
+        """copy a file from the source path on the device to the host machine
+        @param src: the source file path (string)
+        @param tgt: the target file path (string)
+        @return: boolean (True for success or False for failure)
+        """
+        if tgt == '.':
+            tgt = './' + os.path.basename(src)
+        self.runAdbCmd('pull', '%s %s' % (src, tgt))
+        if os.path.isfile(tgt):
+            return 0
+        else:
+            printLog("[pullFile] Failed to get file '%s' via adb." % src, logging.ERROR)
+            return 1
+
+    def removeApp(self, pkgName):
+        """remove an App from the device
+        @param pkgName: the package name of the App (string)
+        @return: boolean (True for success or False for failure)
+        """
+        printLog("Removing package %s ..." % pkgName)
+        try:
+            if self.getAdbCmdOutput('uninstall', pkgName).strip() == 'Failure':
+                printLog('failed to remove %s.' % pkgName)
+                return False
+            else:
+                printLog('%s is removed.' % pkgName)
+                return True
+        except Exception, e:
+            printLog('Exception during remove:' + e.message, logging.ERROR)
+            return False
+
+    def removeFile(self, file_path):
+        """remove a file from the device """
+        self.runAdbCmd('shell', 'rm ' + file_path)
+
+    def removeDirectory(self, dir_path):
+        self.runAdbCmd('shell', 'rm -rf ' + dir_path)
+
+    def reboot(self):
+        self.runAdbCmd('reboot', '')
+
+    def restartAdbServer(self):
+        """
+        restart the ADB server running on host machine
+        @return: 0 for success and other for failure
+        """
+        printLog('Stopping adb-server...', logging.INFO)
+        if self.runAdbCmd('kill-server', '') == 0:
+            printLog('Starting adb-server...', logging.INFO)
+            return self.runAdbCmd('start-server', '')
+        else:
+            return 1
+
+    def startApp(self, activity):
+        """start an App """
+        self.openActivity(activity)
+
+    def openActivity(self, activity):
+        self.runAdbCmd('shell', 'am start -n ' + activity)
+
+    # def __getpkgNameByApk(self, apkName):
+    #     """
+    #     Get the package name from .apk file
+    #     """
+    #     cmd = "aapt dump badging " + apkName + \
+    #           " |grep package:|awk -F ' ' '{print $2}'|awk -F '=' '{print $2}'|tr -d \"'\""
+    #     pkgName = runShellCmd(cmd)
+    #     if pkgName is None:
+    #         printLog('Cannot get package name from apk file.', logging.ERROR)
+    #         return False
+    #
+    # def __installApp(self, apkPath, removeBeforeInstall):
+    #     """
+    #     Jan 24, 2013: swang
+    #     rewrite as a common method to install apk to user part
+    #     """
+    #     if not os.path.isfile(apkPath):
+    #         printLog(apkPath + ' is not found.')
+    #         return False
+    #     # need to remove the package first so that policy file could be updated.
+    #     pkgName = self.__getpkgNameByApk(apkPath)
+    #     # print pkgName
+    #     if removeBeforeInstall:
+    #         if not self.removeApp(pkgName):
+    #             return False
+    #     try:
+    #         printLog("Installing application %s ..." % apkPath)
+    #         self.installApp(apkPath)
+    #         printLog('installation is done.')
+    #         return True
+    #     except Exception, e:
+    #         printLog('Exception during install:' + e.message, logging.ERROR)
+    #         return False
+
+    def stopApp(self, pkgName):
+        """force stop an App """
+        self.runAdbCmd('shell', 'am force-stop ' + pkgName)
+
+    def disableWiFi(self):
+        self.runAdbCmd('shell', 'svc wifi disable')
+
+    def enableWiFi(self):
+        self.runAdbCmd('shell', 'svc wifi enable')
+
+    def disableMobileData(self):
+        self.runAdbCmd('shell', 'svc data disable')
+
+    def enableMobileData(self):
+        self.runAdbCmd('shell', 'svc data enable')
+
 
 if __name__ == '__main__':
     adbClient = AdbClient(os.environ['ANDROID_SERIAL'])
@@ -1087,3 +1269,18 @@ if __name__ == '__main__':
         print "\nBye"
     else:
         print 'date:', adbClient.shell('date')
+
+
+def scanExceptionInLog(file_name):
+    """
+    scan the specified file for exceptions, and save the result to a string (2014-07-16)
+    @param file_name: the filename
+    @return: exception (string)
+    """
+    # scan and report any exception found in given file
+    file_path = os.path.basename(file_name)
+    printLog('[scanExceptionInLog] Scanning file %s for exceptions...' % file_path, logging.INFO)
+    # todo: remove dependency on grep for possible support on windows later on
+    return check_output(r'grep -n "Exception" {}'.format(file_path), shell=True)
+    # cmdList = ["grep", "-n", "ERROR", "-B", "1", "-A", "3", path]
+    # return Popen(cmdList, stdout=PIPE).communicate()[0]

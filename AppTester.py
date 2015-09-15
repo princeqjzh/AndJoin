@@ -10,15 +10,14 @@ import sys
 
 from fw.Tester import Tester
 try:
-    from fw.AppTestRunner import BUILD_ROOT_PATH, BUILD_FILENAME, APP_VERSION, \
-        APP_VERSION_PREFIX, LOCAL_BUILD_ROOT_PATH, AppTestRunner, DEFAULT_TEST_SUITE, PRODUCT_NAME, PRODUCT_SHORT_NAME, \
-        MAIL_ADMIN_ADDRESS, CRITICAL_TESTCASES, APPLOG_FILE
+    from fw.AppTestRunner import BUILD_ROOT_PATH, BUILD_FILENAME, APP_VERSION, APPLOG_FILE, \
+        APP_VERSION_PREFIX, LOCAL_BUILD_ROOT_PATH, AppTestRunner, PRODUCT_NAME, PRODUCT_SHORT_NAME, \
+        DEFAULT_TEST_SUITE, MAIL_ADMIN_ADDRESS, CRITICAL_TESTCASES
 except ValueError, e:
     print e.message
     sys.exit(1)
 
-from fw.iDevice import Android, callCmd
-from fw.TestUtil import printLog, H_LINE, TestStatus
+from fw.TestUtil import printLog, H_LINE, TestStatus, Shell
 
 from fw.pyh import PyH, h3, h4, div, p, table, td, tr
 
@@ -55,7 +54,7 @@ class AppTester(Tester):
             remote_target = path.join(BUILD_ROOT_PATH, APP_VERSION, PRODUCT_NAME + '-' + str(self.test_buildnum), BUILD_FILENAME)
             printLog('[getBuild] Downloading build %s from %s...' % (str(self.test_buildnum), remote_target), logging.INFO)
             try:
-                callCmd('cp {} {}'.format(remote_target, local_target))
+                Shell().runShellCmd('cp {} {}'.format(remote_target, local_target))
                 if path.isfile(local_target):
                     printLog('[getBuild] Build %s is downloaded.' % str(self.test_buildnum), logging.INFO)
                     result = True
@@ -175,7 +174,7 @@ class AppTester(Tester):
         mydiv2 << h4('Test stop: ') + p(self.end_time)
 
         # host info
-        mydiv2 << h4('Test Server:  ') + p(Android.getHostname())
+        mydiv2 << h4('Test Server:  ') + p(self.shell.getHostname())
         # page << h4(content_format2 % (11, 'Test start:', 30, self.start_time), cl='left')
         # page << h4(content_format2 % (11, 'Test stop: ', 30, self.end_time), cl='left')
         # page << h4(content_format2 % (11, 'Build:', 30, CLIENT_VERSION_PREFIX+str(self.buildnum)), cl='left')

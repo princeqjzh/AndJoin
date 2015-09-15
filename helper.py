@@ -12,12 +12,12 @@ def printMethodAndDoc(cls, methods):
             print "\tLacking docstring!"
 
 if __name__ == "__main__":
-    from fw.MobieTestRunner import MobieTestRunner
+    from fw.AppTestRunner import AppTestRunner
 
-    MobieTestRunnerMethods = []
-    for key in MobieTestRunner.__dict__.keys():
+    AppTestRunnerMethods = []
+    for key in AppTestRunner.__dict__.keys():
         if key.startswith('do_'):
-            MobieTestRunnerMethods.append(key)
+            AppTestRunnerMethods.append(key)
 
     from fw.iDevice import iDevice
 
@@ -26,16 +26,16 @@ if __name__ == "__main__":
         if key.startswith('do_'):
             iDeviceMethods.append(key)
 
-    if len(MobieTestRunnerMethods) > 0:
-        MobieTestRunnerMethods.sort()
+    if len(AppTestRunnerMethods) > 0:
+        AppTestRunnerMethods.sort()
 
         # print getattr(iDevice, iDeviceMethods[10]).__doc__
         # exec "print iDevice." + iDeviceMethods[10] + ".__doc__"
         print "\nAvailable test functions:"
-        printMethodAndDoc(MobieTestRunner, MobieTestRunnerMethods)
-    # for i in range(len(MobieTestRunnerMethods)):
-    #     print "%d:\t%s" % (i+1, MobieTestRunnerMethods[i][3:])
-    #     print getattr(MobieTestRunner, MobieTestRunnerMethods[i]).__doc__
+        printMethodAndDoc(AppTestRunner, AppTestRunnerMethods)
+    # for i in range(len(AppTestRunnerMethods)):
+    #     print "%d:\t%s" % (i+1, AppTestRunnerMethods[i][3:])
+    #     print getattr(AppTestRunner, AppTestRunnerMethods[i]).__doc__
 
     if len(iDeviceMethods) > 0:
         iDeviceMethods.sort()

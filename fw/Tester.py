@@ -28,13 +28,13 @@ import logging
 from os import path, remove, getcwd, mkdir, listdir
 from subprocess import Popen
 
-from fw.iDevice import TestDevicePool, callCmd, truncate_file
-from fw.TestUtil import printLog, createLogger, TestStatus, TestCasePool, \
-    TC_DIR, SNAPSHOT_DIR, TS_DIR, \
-    MONKEYTEST_LOG_FILE, TESTER_DEBUG_LOG_FILE, ADBLOG_FILE, LOGS_DIR
-from fw.AppTestRunner import AppTestRunner, APP_VERSION, \
-    APPLOG_FILE_PATH, APPLOG_FILE, DEFAULT_TEST_SUITE, \
-    MAIL_SERVER_ADDRESS, MAIL_SENDER_ADDRESS, MAIL_SENDER_PASSWORD, MAIL_ADMIN_ADDRESS, APP_PKG_NAME
+from fw.iDevice import TestDevicePool
+from fw.TestUtil import printLog, createLogger, TestStatus, Shell, \
+    TC_DIR, SNAPSHOT_DIR, TS_DIR, LOGS_DIR, \
+    MONKEYTEST_LOG_FILE, TESTER_DEBUG_LOG_FILE, ADBLOG_FILE
+from fw.TestRunner import TestCasePool
+from fw.AppTestRunner import AppTestRunner, APP_VERSION, APP_PKG_NAME, APPLOG_FILE_PATH, APPLOG_FILE, \
+    DEFAULT_TEST_SUITE, MAIL_SERVER_ADDRESS, MAIL_SENDER_ADDRESS, MAIL_SENDER_PASSWORD, MAIL_ADMIN_ADDRESS
 
 from fw.MailUtil import send_mail
 
@@ -75,7 +75,8 @@ class Tester:
         """ test start time"""
         self.end_time = None
         """ test finish time"""
-
+        self.shell = Shell()
+        """ Shell object """
         # do environment validation
         if not path.isdir(TC_DIR):
             print('Required directory %s does not exist. please check and run again.' % TC_DIR)
@@ -146,8 +147,8 @@ class Tester:
             print 'Removing old ADB log file %s ...' % ADBLOG_FILE
             remove(ADBLOG_FILE)
         # remove temp png files
-        callCmd(r'rm *.png')
-        callCmd(r'rm %s/*.png' % SNAPSHOT_DIR)
+        self.shell.runShellCmd(r'rm *.png')
+        self.shell.runShellCmd(r'rm %s/*.png' % SNAPSHOT_DIR)
         # reset test pool status
         for tc in self.testPool:
             tc.result = TestStatus.NotRun
@@ -248,7 +249,7 @@ class Tester:
         child = Popen(['adb', 'logcat', '>', '/data/data/%s' % ADBLOG_FILE])
         # truncate file after 3 seconds to get rid of old logs
         time.sleep(3)
-        truncate_file(ADBLOG_FILE)
+        self.shell.truncate_file(ADBLOG_FILE)
         try:
             tr = AppTestRunner(self.test_buildnum, self.testPool, self.device)
             tr.run()

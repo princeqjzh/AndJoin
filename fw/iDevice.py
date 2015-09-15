@@ -31,16 +31,16 @@ import logging
 import re
 import time
 import filecmp
-from subprocess import call, Popen, PIPE, check_output
-from shutil import rmtree
+from subprocess import call
 from PIL import Image
+from fw.androidviewclient.adbclient import AdbClient
 
 try:
     sys.path.append(os.path.abspath('./%s' % CORE_DIR))
 except:
     pass
 
-from fw.TestUtil import printLog, MONKEYTEST_LOG_FILE, CORE_DIR, ADBLOG_FILE
+from fw.TestUtil import printLog, CORE_DIR, Shell, validateDigit, validateString
 from fw.androidviewclient.viewclient import ViewClient
 
 # http://stackoverflow.com/questions/366682/how-to-limit-execution-time-of-a-function-call-in-python
@@ -52,320 +52,12 @@ LOG_LEVEL = logging.DEBUG
 SNAPSHOT_IMAGE_FORMAT = 'png'
 SNAPSHOT_WIDTH = 480
 CONNECT_TIMEOUT = 10
+DUMP_TIMEOUT = 300
+FETCH_DEVICEINFO_TIMEOUT = 5
 REPEAT_TIMES_ON_ERROR = 2
 DEFAULT_INTERVAL = 0.5
 
 DEBUG = True
-
-
-def runShellCmd(cmd):
-    """
-    run the given shell command and return the output, and print any errors if generated
-    @param cmd: the shell command
-    @return: the standard output (String)
-    """
-    printLog("[runShellCmd] Running cmd:" + cmd, logging.DEBUG)
-    try:
-        p = Popen(cmd, shell=True, stdout=PIPE, stderr=PIPE)
-        out, err = p.communicate()
-        # printLog("out:\n%s\n" % out)
-        if len(err) > 0:
-            printLog("[runShellCmd]\n%s" % err, logging.DEBUG)
-    except (TypeError, ValueError):
-        printLog("[runShellCmd] Exception when run cmd '%s'." % cmd, logging.ERROR)
-        return None
-    return out
-
-
-def callCmd(cmd):
-    """
-    run the given shell command and return 0 (succeeded) or 1 (failed)
-    @param cmd: the shell command
-    @return: 0 (succeeded) or 1 (failed)
-    """
-    rcode = call(cmd, shell=True)
-    if rcode == 0:
-        return 0
-    else:
-        printLog("[callCmd] Failed to execute command '{}', returned {}.".format(cmd, rcode), logging.ERROR)
-        return 1
-
-
-# def formatString(input_string):
-#     if input_string < 10:
-#         output = '0' + str(input_string)
-#     else:
-#         output = str(input_string)
-#     return output
-
-
-def truncate_file(fname, size=0):
-    """
-    truncate the given file to specified size in bytes.
-    @param fname: the filename
-    @param size: target size in byte (int, default=0)
-    """
-    if not os.path.isfile(fname):
-        return
-    # with open(fname, "ab") as f:
-    # 	f.truncate(size)
-    # 	f.close()
-    initSize = os.path.getsize(fname)
-    printLog('initial size of %s: %d' % (fname, initSize))
-    with open(fname, mode='w') as f:
-        f.truncate(size)
-        # f.write('[log start]\n')
-    finalSize = os.path.getsize(fname)
-    printLog('final size of %s: %d' % (fname, finalSize))
-    printLog('truncated size of %s: %d' % (fname, initSize - finalSize))
-
-
-def cleanDir(Dir):
-    print "Start cleaning dir %s" % Dir
-    # clean the specified dir
-    if os.path.isdir(Dir):
-        paths = os.listdir(Dir)
-        for path in paths:
-            filePath = os.path.join(Dir, path)
-            if os.path.isfile(filePath):
-                try:
-                    os.remove(filePath)
-                except os.error:
-                    print "remove %s error." % filePath
-            elif os.path.isdir(filePath):
-                rmtree(filePath, True)
-
-
-def scanExceptionInLog(file_name):
-    """
-    scan the specified file for exceptions, and save the result to a string (2014-07-16)
-    @param file_name: the filename
-    @return: exception (string)
-    """
-    # scan and report any exception found in given file
-    file_path = os.path.basename(file_name)
-    printLog('[scanExceptionInLog] Scanning file %s for exceptions...' % file_path, logging.INFO)
-    # todo: remove dependency on grep for possible support on windows later on
-    return check_output(r'grep -n "Exception" {}'.format(file_path), shell=True)
-    # cmdList = ["grep", "-n", "ERROR", "-B", "1", "-A", "3", path]
-    # return Popen(cmdList, stdout=PIPE).communicate()[0]
-
-
-def validateDigit(input_str):
-    """
-    check if the string parameter is digital, including integer and float.
-    return stripped input string if not empty and is digital
-    @param input_str: the input string
-    @return: a stripped string
-    """
-    tmpstr = input_str.strip()
-    if '.' in tmpstr:
-        if not tmpstr.split('.')[0].isdigit() or not tmpstr.split('.')[1].isdigit():
-            raise ValueError('Bad float parameter.')
-    elif not tmpstr.isdigit():
-        raise ValueError('Bad integer parameter.')
-    return input_str.strip()
-
-
-def validateString(input_str):
-    """
-    check if the input string is empty, return input string if not empty
-    @param input_str: the input string
-    @return: a stripped string
-    """
-    if len(input_str.strip()) == 0:
-        raise ValueError('Bad string parameter.')
-    return input_str.strip()
-
-
-class Android:
-    """
-    provide functions that Android OS enables via ADB
-    """
-    def __init__(self, deviceId):
-        self.deviceId = deviceId
-
-    def __del__(self):
-        pass
-
-    def updateApp(self):
-        """ abstract function to update an installed App on device"""
-        raise AssertionError("updateApp() is a abstract function, you need to implement it in your class.")
-
-    def runMonkeyTest(self, pkgName, count):
-        """
-        run Monkey test
-        @param pkgName: the package name of the app
-        @param count: the sample test count
-        @return: boolean (True for pass and False for fail)
-        """
-        if os.path.isfile(MONKEYTEST_LOG_FILE):
-            os.remove(MONKEYTEST_LOG_FILE)
-        args = 'monkey -p {} -s 2 --throttle 300 --pct-touch 50 --pct-motion 20 --pct-trackball 20 ' \
-               '--pct-syskeys 10 {} > {}'.format(pkgName, count, MONKEYTEST_LOG_FILE)
-        self.runAdbShellCmd('shell', args)
-        exception = scanExceptionInLog(MONKEYTEST_LOG_FILE)
-        if exception == '':
-            os.remove(MONKEYTEST_LOG_FILE)
-            return True
-        else:
-            return False
-
-    def runAdbShellCmd(self, action, args):
-        """execute ADB command and return the stdout in string
-        @param action: the ADB action (string)
-        @param args: the command arguments (string)
-        @return: string
-        """
-        return runShellCmd('adb ' + action + ' ' + args)  # single device mode
-
-    def callAdbCmd(self, action, args):
-        """execute ADB command and return result in integer
-        @param action: the ADB action (string)
-        @param args: the command arguments (string)
-        @return:integer (0 for success or 1 for failure)
-        """
-        return callCmd('adb %s %s' % (action, args))
-        # return callCmd('adb -s %s %s' % (self.deviceId, action, args))  # multi-device mode
-
-    def installApp(self, apkName):
-        """install an App
-        @param apkName: the .apk filename
-        @return: integer (0 for success or 1 for failure)
-        """
-        printLog("Installing app from %s..." % apkName)
-        return self.callAdbCmd('install', apkName)
-
-    def upgradeApp(self, apkName):
-        """upgrade an App
-        @param apkName: the .apk filename
-        @return: integer (0 for success or 1 for failure)
-        """
-        printLog("upgrading app from %s..." % apkName)
-        return self.callAdbCmd('install', '-r ' + apkName)
-
-    def pushFile(self, src, tgt):
-        """push a file to the target path on the device
-        @param src: the source file path (string)
-        @param tgt: the target file path (string)
-        @return: boolean (True for success or False for failure)
-        """
-        return self.callAdbCmd('push', '%s %s' % (src, tgt))
-
-    def pullFile(self, src, tgt='.'):
-        """copy a file from the source path on the device to the host machine
-        @param src: the source file path (string)
-        @param tgt: the target file path (string)
-        @return: boolean (True for success or False for failure)
-        """
-        if tgt == '.':
-            tgt = './' + os.path.basename(src)
-        self.callAdbCmd('pull', '%s %s' % (src, tgt))
-        if os.path.isfile(tgt):
-            return 0
-        else:
-            printLog("[pullFile] Failed to get file '%s' via adb." % src, logging.ERROR)
-            return 1
-
-    def removeApp(self, pkgName):
-        """remove an App from the device
-        @param pkgName: the package name of the App (string)
-        @return: boolean (True for success or False for failure)
-        """
-        printLog("Removing package %s ..." % pkgName)
-        try:
-            if self.runAdbShellCmd('uninstall', pkgName).strip() == 'Failure':
-                printLog('failed to remove %s.' % pkgName)
-                return False
-            else:
-                printLog('%s is removed.' % pkgName)
-                return True
-        except Exception, e:
-            printLog('Exception during remove:' + e.message, logging.ERROR)
-            return False
-
-    def removeFile(self, file_path):
-        """remove a file from the device """
-        self.callAdbCmd('shell', 'rm ' + file_path)
-
-    def removeDirectory(self, dir_path):
-        self.callAdbCmd('shell', 'rm -rf ' + dir_path)
-
-    def restartAdbServer(self):
-        """
-        restart the ADB server running on host machine
-        @return: 0 for success and other for failure
-        """
-        printLog('Stopping adb-server...', logging.INFO)
-        if self.callAdbCmd('kill-server', '') == 0:
-            printLog('Starting adb-server...', logging.INFO)
-            return self.callAdbCmd('start-server', '')
-        else:
-            return 1
-
-    def startApp(self, activity):
-        """start an App """
-        self.openActivity(activity)
-
-    def openActivity(self, activity):
-        self.callAdbCmd('shell', 'am start -n ' + activity)
-
-    # def __getpkgNameByApk(self, apkName):
-    #     """
-    #     Get the package name from .apk file
-    #     """
-    #     cmd = "aapt dump badging " + apkName + \
-    #           " |grep package:|awk -F ' ' '{print $2}'|awk -F '=' '{print $2}'|tr -d \"'\""
-    #     pkgName = runShellCmd(cmd)
-    #     if pkgName is None:
-    #         printLog('Cannot get package name from apk file.', logging.ERROR)
-    #         return False
-    #
-    # def __installApp(self, apkPath, removeBeforeInstall):
-    #     """
-    #     Jan 24, 2013: swang
-    #     rewrite as a common method to install apk to user part
-    #     """
-    #     if not os.path.isfile(apkPath):
-    #         printLog(apkPath + ' is not found.')
-    #         return False
-    #     # need to remove the package first so that policy file could be updated.
-    #     pkgName = self.__getpkgNameByApk(apkPath)
-    #     # print pkgName
-    #     if removeBeforeInstall:
-    #         if not self.removeApp(pkgName):
-    #             return False
-    #     try:
-    #         printLog("Installing application %s ..." % apkPath)
-    #         self.installApp(apkPath)
-    #         printLog('installation is done.')
-    #         return True
-    #     except Exception, e:
-    #         printLog('Exception during install:' + e.message, logging.ERROR)
-    #         return False
-
-    def stopApp(self, pkgName):
-        """force stop an App """
-        self.callAdbCmd('shell', 'am force-stop ' + pkgName)
-
-    def disableWiFi(self):
-        self.callAdbCmd('shell', 'svc wifi disable')
-
-    def enableWiFi(self):
-        self.callAdbCmd('shell', 'svc wifi enable')
-
-    def disableMobileData(self):
-        self.callAdbCmd('shell', 'svc data disable')
-
-    def enableMobileData(self):
-        self.callAdbCmd('shell', 'svc data enable')
-
-    @staticmethod
-    def getHostname():
-        return runShellCmd(r"hostname")
-
-
-# -----------------------Android Class END-------------------------------
 
 
 class TimeoutException(Exception):
@@ -386,7 +78,7 @@ def time_limit(seconds):
 
 
 def getDeviceIdList():
-    devices = runShellCmd(r"adb devices")  # |awk -F'\t' '{print $1}'
+    devices = Shell().getShellCmdOutput(r"adb devices")  # |awk -F'\t' '{print $1}'
     print devices
     deviceIdList = []  # filter(lambda x: len(x) > 0, devices.split('\n'))  # .split('\t',1)[0]
     connected_RE = re.compile("^\S+\t*device$")
@@ -406,11 +98,23 @@ def getDeviceIdList():
 
 def __getDeviceInfo(deviceId, propName):
     cmd = "adb -s " + deviceId + " shell getprop | awk -F':' '/" + propName + "/ { print $2 }'|tr -d '[] '"
-    output = runShellCmd(cmd).splitlines()
-    if len(output) > 0:
-        return output[0].strip()
-    else:
-        return 'UNKNOWN'
+    # add alarm to detect timeout
+    shell = Shell()
+    counter = 0
+    while counter < 2:
+        try:
+            with time_limit(FETCH_DEVICEINFO_TIMEOUT):
+                output = shell.getShellCmdOutput(cmd).splitlines()
+                if len(output) > 0:
+                    return output[0].strip()
+                else:
+                    return 'UNKNOWN'
+        except TimeoutException:
+            printLog("Timed out! Failed to retrieve device info.", logging.ERROR)
+            # todo: reboot device or emulator
+            output = shell.getShellCmdOutput('adb reboot')
+            time.sleep(20)
+            counter += 1
 
 
 def getDeviceAndroidVersion(deviceId):
@@ -469,7 +173,6 @@ class TestDevicePool(list):
     """
     def __init__(self):
         list.__init__([])
-        # self.queue = []
         """ the list of C{TestDevice} """
         for device_id in getDeviceIdList():
             device = TestDevice(device_id)
@@ -538,9 +241,10 @@ class TestDevicePool(list):
                 printLog("[Busy]")
 
 
-class iDevice(Android):
+class iDevice(AdbClient):
     """
-    intelligent android device interface based on @AndroidViewClient by Diego Torres Milano
+    intelligent android device based on AndroidViewClient by Diego Torres Milano
+    https://github.com/dtmilano/AndroidViewClient
     @author: Xinquan Wang
     """
     DUMP_LIST = ('click', 'clickchild', 'drag', 'keypress', 'longpress', 'swipe', 'start', 'touch')
@@ -559,7 +263,7 @@ class iDevice(Android):
         """ the string to represent the current test thread """
         self.resultFlag = True
         """ the test result flag (boolean) """
-        Android.__init__(self, self.deviceId)
+        AdbClient.__init__(self, serialno=self.deviceId)
         # Connect to the current device
         self.__connect()
         printLog(self.threadName + '[iDevice] Device %s init completed.' % self.deviceId, logging.DEBUG)
@@ -603,7 +307,7 @@ class iDevice(Android):
         self.__connect()
 
     def __del__(self):
-        Android.__del__(self)
+        AdbClient.__del__(self)
         self.adbc = None
         self.deviceId = None
 
@@ -854,7 +558,7 @@ class iDevice(Android):
         added to catch the alarm exception so that main thread won't quit (2015-08-11)
         """
         try:
-            with time_limit(300):
+            with time_limit(DUMP_TIMEOUT):
                 self.vc.dump()
         except TimeoutException:
             printLog(self.threadName + "Timed out! Dump view failed.", logging.ERROR)
@@ -1013,28 +717,6 @@ class iDevice(Android):
             printLog(self.threadName + 'Exception in do_check: %s' % e.message, logging.ERROR)
         finally:
             return self.resultFlag
-
-    # def do_clickByText(self, str_arg):
-    #     """
-    #     click the UI element with the given text
-    #     @param str_arg:
-    #     @return: none
-    #     """
-    #     # printLog(self.threadName + "[running 'clickByText %s']" % str_arg)
-    #     # arg validation
-    #     arg = self.__validateString(str_arg).strip()
-    #     if iDevice.dump_view:
-    #         self.__dumpview()
-    #     try:
-    #         tmpView = self.vc.findViewWithText(arg)
-    #         if tmpView:
-    #             print tmpView.getPositionAndSize()
-    #             tmpView.touch()
-    #         else:
-    #             print("view with text %s not found." % arg)
-    #             self.resultFlag = False
-    #     except Exception, e:
-    #         printLog(self.threadName + 'exception in do_click.' % e.message, logging.ERROR)
 
     def do_clickchild(self, str_arg):
         """
@@ -1222,6 +904,8 @@ class iDevice(Android):
                     end_view_id = m.group('end')
                     startPoint = self.vc.findViewByIdOrRaise(start_view_id).getCenter()
                     endPoint = self.vc.findViewByIdOrRaise(end_view_id).getCenter()
+                else:
+                    raise ValueError("Bad view id is found in the given argument {}".format(str_arg))
             except:
                 printLog(self.threadName + '[do_drag] FAILED to get view info! Please check the view id provided.',
                          logging.ERROR)
@@ -1379,7 +1063,7 @@ class iDevice(Android):
         try:
             # self.adbc.startActivity(validateString(str_arg))
             # the above approach failed in unittest complaining device is offline, weird...
-            return self.callAdbCmd('shell am start -n', validateString(str_arg))
+            return self.runAdbCmd('shell am start -n', validateString(str_arg))
         except RuntimeError:
             self.resultFlag = False
             if DEBUG:

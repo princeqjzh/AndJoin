@@ -30,8 +30,7 @@ from os import path, remove
 import logging
 import re
 
-from fw.TestUtil import printLog, CORE_DIR, CONFIG_FILE
-from fw.iDevice import runShellCmd, validateDigit
+from fw.TestUtil import printLog, CORE_DIR, CONFIG_FILE, validateDigit
 from fw.TestRunner import TestRunner
 
 import ConfigParser
@@ -144,15 +143,15 @@ class AppTestRunner(TestRunner):
         """ sample implement: get it from com.xxx.xxx_preferences.xml
         <int name="pref_current_app_version_code" value="604" />
         """
-        target_filename = self.deviceId + '_preference.xml'
-        if self.pullFile('/data/data/%s/shared_prefs/%s_preferences.xml' % (APP_PKG_NAME, APP_PKG_NAME), target_filename) == 0:
-            app_version_code_RE = re.compile("^\s*<int name=\"pref_current_app_version_code\" value=\"(\d+)\" />\s*$")
-            with open(target_filename) as fd:
-                for line in fd.readlines():
-                    if "pref_current_app_version_code" in line:
-                        remove(target_filename)
-                        return int(app_version_code_RE.search(line.strip('\n')).groups()[0])
-            remove(target_filename)
+        # target_filename = self.deviceId + '_preference.xml'
+        # if self.pullFile('/data/data/%s/shared_prefs/%s_preferences.xml' % (APP_PKG_NAME, APP_PKG_NAME), target_filename) == 0:
+        #     app_version_code_RE = re.compile("^\s*<int name=\"pref_current_app_version_code\" value=\"(\d+)\" />\s*$")
+        #     with open(target_filename) as fd:
+        #         for line in fd.readlines():
+        #             if "pref_current_app_version_code" in line:
+        #                 remove(target_filename)
+        #                 return int(app_version_code_RE.search(line.strip('\n')).groups()[0])
+        #     remove(target_filename)
         return 0
 
     @staticmethod
@@ -185,7 +184,7 @@ class AppTestRunner(TestRunner):
         """
         # self.resultFlag=change_phone_time(int(self.validateDigit(str_arg)), self.deviceId)
         cmd = 'python {}/changePhoneTime.py {}'.format(CORE_DIR, validateDigit(str_arg))
-        print runShellCmd(cmd)
+        print self.sh.getShellCmdOutput(cmd)
         # printLog(self.threadName + "[status=%s]" % self.resultFlag)
 
     def do_removeApp(self, str_arg=''):
@@ -255,7 +254,7 @@ class AppTestRunner(TestRunner):
         tmpFn = "tmp.log"
         self.pullFile('/data/data/%s/app_logs/log.txt' % APP_PKG_NAME, tmpFn)
         cmd = "tail -n 100 %s | grep '%s'" % (tmpFn, str_arg)
-        output = runShellCmd(cmd)
+        output = self.sh.getShellCmdOutput(cmd)
         if str_arg in output:
             self.resultFlag = True
         else:
