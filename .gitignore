@@ -1,0 +1,28 @@
+# ignore python binary files *.pyc and *.class
+*.pyc
+*.class
+
+# ignore project file
+.project
+_project
+
+# ignore backup files
+*.bak
+
+# log files
+*.log
+
+# csv files
+*.csv
+
+# pictures
+*.png
+
+# test report files
+*.html
+
+# testcase and suite files
+*.tc
+*.ts
+!example.tc
+!example.ts

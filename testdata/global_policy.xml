@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="utf-8"?>
+<map> 
+ <int name="clientManager_versionCheckInterval" value="60"/> 
+ <boolean name="mobileMD_startCheckMobileDataWarning" value="false"/> 
+ <int name="mobileMD_batteryForegroundThreshold" value="100"/> 
+ <int name="dataCapture_maxPendingLogFiles" value="10"/> 
+ <int name="mobileMD_dataPlanThreshold" value="90"/> 
+ <int name="dataCapture_eventStormGPSConnectionChangeCheckDuration" value="1800"/> 
+ <string name="mobileMD_communityInfoURL">  http://test.mucheckin.innopath.net/mdCommunity_dev </string> 
+ <boolean name="clientManager_cicEnabled" value="true"/> 
+ <string name="mobileMD_oemInfo">  [] </string> 
+ <int name="mobileMD_recommAppsDownloadInterval" value="21600"/> 
+ <string name="dataCapture_usageLogUploadURL">  http://mdeng.innopath.com:7310/ </string> 
+ <int name="dataCapture_eventLogUploadInterval" value="0"/> 
+ <boolean name="clientManager_blockprivacydata" value="true"/> 
+ <int name="dataCapture_maxlogSize" value="500"/> 
+ <string name="clientManager_cicURL">  http://test.mucheckin.innopath.net/innoMobile/md_policy.dat </string> 
+ <string name="clientManager_cicVersionURL">  http://test.mucheckin.innopath.net/innoMobile/md_policy_version.dat </string> 
+ <int name="clientManager_currentVersion" value="10029"/> 
+ <string name="mobileMD_dbPurgeRule">  {  &quot;  screen_power_usage  &quot;  :[  &quot;  timestamp  &quot;  ,8],  &quot;  alertLog  &quot;  :[  &quot;  log_time  &quot;  ,30],  &quot;  locationBasedPatternData  &quot;  :[  &quot;  update_time  &quot;  ,90],  &quot;  agg_daily_app_info  &quot;  :[  &quot;  day  &quot;  ,90],  &quot;  DCEvent2  &quot;  :[  &quot;  time  &quot;  ,8],  &quot;  agg_daily_overall_info  &quot;  :[  &quot;  day  &quot;  ,90],  &quot;  usage_logs  &quot;  :[  &quot;  log_time  &quot;  ,8],  &quot;  app_crash  &quot;  :[  &quot;  crash_time  &quot;  ,30],  &quot;  score  &quot;  :[  &quot;  day  &quot;  ,90],  &quot;  avatar  &quot;  :[  &quot;  update_time  &quot;  ,30],  &quot;  event_app_power_info  &quot;  :[  &quot;  time  &quot;  ,8],  &quot;  call_log  &quot;  :[  &quot;  end_time  &quot;  ,30],  &quot;  app_usage  &quot;  :[  &quot;  log_time  &quot;  ,30],  &quot;  staticdata  &quot;  :[  &quot;  timestamp  &quot;  ,90],  &quot;  activity_log  &quot;  :[  &quot;  log_time  &quot;  ,8],  &quot;  batteryIdleDrainInfo  &quot;  :[  &quot;  start_time  &quot;  ,8],  &quot;  event_data_usage  &quot;  :[  &quot;  time  &quot;  ,8],  &quot;  signal_power_usage  &quot;  :[  &quot;  timestamp  &quot;  ,8]} </string> 
+ <string name="mobileMD_billingPlan">  {  &quot;  46002  &quot;  :  &quot;  50MB, 100MB, 250MB, 500MB, 2GB, 5GB  &quot;  ,  &quot;  310260  &quot;  :  &quot;  200MB, 500MB, 1GB, 2GB, 3GB, 5GB  &quot;  ,  &quot;  46001  &quot;  :  &quot;  30MB, 70MB, 150MB, 280MB, 500MB, 2GB, 5GB  &quot;  ,  &quot;  310410  &quot;  :  &quot;  200MB, 500MB, 1GB, 2GB, 3GB, 5GB  &quot;  ,  &quot;  310170  &quot;  :  &quot;  200MB, 500MB, 1GB, 2GB, 3GB, 5GB  &quot;  } </string> 
+ <string name="dataCapture_uploadURL">  http://fiji21.innopath.com:7300/ </string> 
+ <int name="dataCapture_eventStormWiFiConnectionChangeCheckOccurence" value="10"/> 
+ <string name="dataCapture_usageUploadWithLogDeviceIdList">  ALL,
+         355031040980753 </string> 
+ <boolean name="clientManager_blocklocationdata" value="false"/> 
+ <int name="dataCapture_eventStormBTConnectionChangeCheckDuration" value="1800"/> 
+ <string name="dataCapture_smallDeltaDbUploadRule">  {  &quot;  alertLog  &quot;  :  &quot;  log_time  &quot;  ,  &quot;  preference_store  &quot;  :  &quot;  full  &quot;  ,  &quot;  agg_daily_overall_info  &quot;  :  &quot;  update_time  &quot;  ,  &quot;  usage_logs  &quot;  :  &quot;  log_time  &quot;  ,  &quot;  staticdata  &quot;  :  &quot;  UPDATE staticdata SET dialingNumber=null,imsi=null,cdma_nid=null,cdma_sid=null, wifimacaddress=null;  &quot;  } </string> 
+ <int name="mobileMD_batteryHotThreshold" value="0"/> 
+ <int name="mobileMD_firstDayOfBilling" value="1"/> 
+ <int name="mobileMD_batteryDrainFastThreshold" value="100"/> 
+ <int name="dataCapture_wifiStatusCheckInterval" value="5"/> 
+ <int name="dataCapture_appUsageMonitorInterval" value="30"/> 
+ <string name="mobileMD_customerName">  innoMobile </string> 
+ <int name="dataCapture_dataUsageCheckInterval" value="60"/> 
+ <int name="dataCapture_eventStormWiFiConnectDisconnectChangeInterval" value="60"/> 
+ <int name="mobileMD_InternalStorageUsedThreshold" value="70"/> 
+ <string name="mobileMD_carrierInfo">  [] </string> 
+ <string name="dataCapture_bearer">  WIFI </string> 
+ <int name="dataCapture_retryTimeout" value="6000"/> 
+ <string name="dataCapture_customerName">  innoMobile </string> 
+ <int name="dataCapture_maxBackupIndex" value="5"/> 
+ <int name="dataCapture_eventStormWiFiConnectionChangeCheckDuration" value="1800"/> 
+ <int name="dataCapture_eventStormBTConnectionChangeCheckOccurrence" value="6"/> 
+ <int name="mobileMD_communityInfoDownloadInterval" value="86400"/> 
+ <int name="dataCapture_eventStormPowerConnectionChangeCheckOccurence" value="10"/> 
+ <int name="dataCapture_batteryCheckInterval" value="60"/> 
+ <string name="mobileMD_categoryRequestUrl">  http://mdeng.innopath.com:7310/mmdservice/v1/appcategory/appcollections </string> 
+ <int name="clientManager_minVersion" value="0"/> 
+ <int name="dataCapture_requestTimeout" value="8000"/> 
+ <int name="mobileMD_usageLogUploadInterval" value="1440"/> 
+ <boolean name="clientManager_versionCheckEnabled" value="false"/> 
+ <string name="dataCapture_dbUploadRule">  {  &quot;  screen_power_usage  &quot;  :  &quot;  none  &quot;  ,  &quot;  app_user_rating  &quot;  :  &quot;  update_time  &quot;  ,  &quot;  alertLog  &quot;  :  &quot;  log_time  &quot;  ,  &quot;  agg_daily_app_info  &quot;  :  &quot;  update_time  &quot;  ,  &quot;  DCEvent2  &quot;  :  &quot;  time  &quot;  ,  &quot;  daily_highlights  &quot;  :  &quot;  none  &quot;  ,  &quot;  agg_daily_overall_info  &quot;  :  &quot;  update_time  &quot;  ,  &quot;  recommend_app  &quot;  :  &quot;  none  &quot;  ,  &quot;  app_crash  &quot;  :  &quot;  none  &quot;  ,  &quot;  sys_event  &quot;  :  &quot;  none  &quot;  ,  &quot;  score  &quot;  :  &quot;  none  &quot;  ,  &quot;  db_operation_log  &quot;  :  &quot;  update_time  &quot;  ,  &quot;  sys_parameter  &quot;  :  &quot;  full  &quot;  ,  &quot;  agg_device_health  &quot;  :  &quot;  none  &quot;  ,  &quot;  event_app_power_info  &quot;  :  &quot;  none  &quot;  ,  &quot;  timeBasedPatternData  &quot;  :  &quot;  full  &quot;  ,  &quot;  app_group  &quot;  :  &quot;  full  &quot;  ,  &quot;  call_number  &quot;  :  &quot;  none  &quot;  ,  &quot;  app_usage  &quot;  :  &quot;  log_time  &quot;  ,  &quot;  agg_app_details  &quot;  :  &quot;  none  &quot;  ,  &quot;  staticdata  &quot;  :  &quot;  UPDATE staticdata SET dialingNumber=null,imsi=null,cdma_nid=null,cdma_sid=null, wifimacaddress=null;  &quot;  ,  &quot;  activity_log  &quot;  :  &quot;  none  &quot;  ,  &quot;  location_profile  &quot;  :  &quot;  full  &quot;  ,  &quot;  preference_store  &quot;  :  &quot;  full  &quot;  ,  &quot;  modes  &quot;  :  &quot;  none  &quot;  ,  &quot;  location_control_config  &quot;  :  &quot;  full  &quot;  ,  &quot;  event_data_usage  &quot;  :  &quot;  none  &quot;  ,  &quot;  signal_power_usage  &quot;  :  &quot;  none  &quot;  ,  &quot;  community_statistics_info  &quot;  :  &quot;  none  &quot;  ,  &quot;  agg_power_details  &quot;  :  &quot;  none  &quot;  ,  &quot;  cell_info  &quot;  :  &quot;  none  &quot;  ,  &quot;  avatar_notif_user_choice  &quot;  :  &quot;  full  &quot;  ,  &quot;  locationBasedPatternData  &quot;  :  &quot;  UPDATE locationBasedPatternData SET network_longitude=null, network_latitude=null, availbssids=null;  &quot;  ,  &quot;  app  &quot;  :  &quot;  full  &quot;  ,  &quot;  usage_logs  &quot;  :  &quot;  log_time  &quot;  ,  &quot;  community_app_info_user_action  &quot;  :  &quot;  none  &quot;  ,  &quot;  locationInfo  &quot;  :  &quot;  none  &quot;  ,  &quot;  avatar  &quot;  :  &quot;  full  &quot;  ,  &quot;  wifi_ssid  &quot;  :  &quot;  none  &quot;  ,  &quot;  notification_display  &quot;  :  &quot;  none  &quot;  ,  &quot;  call_log  &quot;  :  &quot;  none  &quot;  ,  &quot;  location_entry  &quot;  :  &quot;  UPDATE location_entry SET location_info=null;  &quot;  ,  &quot;  batteryIdleDrainInfo  &quot;  :  &quot;  none  &quot;  ,  &quot;  power_optim_mode_action_details  &quot;  :  &quot;  none  &quot;  ,  &quot;  community_info  &quot;  :  &quot;  none  &quot;  ,  &quot;  report_card  &quot;  :  &quot;  none  &quot;  } </string> 
+ <string name="mobileMD_batteryChargeColor">  669900 </string> 
+ <int name="mobileMD_restartTimesThreshold" value="4"/> 
+ <int name="dataCapture_eventStormGPSConnectionChangeCheckOccurrence" value="120"/> 
+ <int name="mobileMD_operatorBannerDownloadInterval" value="86400"/> 
+ <boolean name="clientManager_dlEnabled" value="false"/> 
+ <boolean name="clientManager_versionUpdateWiFiOnly" value="true"/> 
+ <int name="clientManager_policyVersion" value="349"/> 
+ <boolean name="clientManager_isForDebug" value="false"/> 
+ <boolean name="dataCapture_eventStormActionNotification" value="false"/> 
+ <int name="mobileMD_malwareDetectionServerTimeout" value="10"/> 
+ <boolean name="clientManager_cicWiFiOnly" value="true"/> 
+ <boolean name="dataCapture_enableNewCapture" value="true"/> 
+ <int name="mobileMD_addedMobileData4Test" value="0"/> 
+ <int name="mobileMD_screenTimerOutThreshold" value="60"/> 
+ <int name="dataCapture_minBatteryLevel" value="0"/> 
+ <int name="mobileMD_serviceNoticeDownloadInterval" value="3600"/> 
+ <string name="mobileMD_malwareDetectionUrl">  http://mdeng.innopath.com:7310/mmdservice/v1/malwaredetect/analyze </string> 
+ <int name="dataCapture_logValidityPeriod" value="1"/> 
+ <int name="dataCapture_eventStormPowerConnectionChangeCheckDuration" value="300"/> 
+ <int name="mobileMD_signalLevelThreshold" value="1"/> 
+ <string name="mobileMD_batteryDischargeColor">  0099CC </string> 
+ <string name="clientManager_versionCheckURL">  http://mdeng.innopath.com:7310/innoMobile/appInfo.dat </string> 
+ <int name="mobileMD_IsAppListPolulated" value="1"/> 
+ <int name="dataCapture_uploadOnWifiTimeout" value="48"/> 
+ <int name="mobileMD_batteryWarmThreshold" value="32"/> 
+ <string name="mobileMD_batteryHealthIndexCheckURL">  http://mdeng.innopath.com:7310/mmdservice/v1/ </string> 
+ <int name="dataCapture_maxDbSize" value="50000000"/> 
+ <int name="clientManager_cicInterval" value="1440"/> 
+ <boolean name="mobileMD_userUsageLogging" value="true"/> 
+ <float name="mobileMD_batteryDrainRate" value="0.05"/> 
+</map>

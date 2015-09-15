@@ -1,0 +1,11 @@
+Changes in V3.0
+
+@Architecture
+1. Abandoned the unstable monkeyrunner backend, and replace it with Android View Client
+2. Abandoned multi-thread support and bring back log error filtering and activity launch time monitoring.
+3. Added debugger.py to assist user determining if a view id can be used directly, or should be replaced by a node path
+   string.
+3. Some class optimizations
+
+@Device Support
+1. Added support to Genymotion emulators
