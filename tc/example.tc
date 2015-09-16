@@ -1,0 +1,17 @@
+@TITLE
+test install and start app Apidemos
+
+@DESC
+test install and start the app and verify the App title bar
+
+@SETUP
+installApp
+startApp
+
+@VALIDATION
+check id/action_bar_title API Demos
+assert true
+
+@TEARDOWN
+# quit the app
+keypress KEYCODE_BACK

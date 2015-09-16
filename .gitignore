@@ -8,9 +8,13 @@ _project
 
 # ignore backup files
 *.bak
+*.txt~
+*.log~
+.gitignore~
 
 # log files
 *.log
+*.txt
 
 # csv files
 *.csv
@@ -21,8 +25,6 @@ _project
 # test report files
 *.html
 
-# testcase and suite files
-*.tc
-*.ts
-!example.tc
-!example.ts
+# testcase and suite backup files
+*.tc~
+*.ts~
