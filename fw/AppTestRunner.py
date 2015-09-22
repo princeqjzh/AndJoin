@@ -73,6 +73,7 @@ except ConfigParser.NoOptionError:
 
 
 APPLOG_FILE_PATH = '/data/data/%s/app_logs/%s' % (APP_PKG_NAME, APPLOG_FILE) if len(APPLOG_FILE.strip()) > 0 else ''
+""" log file path"""
 UPGRADE_APP_ON_TEST_START = False
 
 # below are product specific constants, please feel free to customize them, or add new one.
@@ -142,6 +143,7 @@ class AppTestRunner(TestRunner):
     def getCurrentBuildNumber(self):
         """ sample implement: get it from com.xxx.xxx_preferences.xml
         <int name="pref_current_app_version_code" value="604" />
+        @:return build number (integer)
         """
         # target_filename = self.deviceId + '_preference.xml'
         # if self.pullFile('/data/data/%s/shared_prefs/%s_preferences.xml' % (APP_PKG_NAME, APP_PKG_NAME), target_filename) == 0:
@@ -189,7 +191,7 @@ class AppTestRunner(TestRunner):
 
     def do_removeApp(self, str_arg=''):
         """
-        sample implementation: remove app from device
+        uninstall the App
         """
         self.removeApp(APP_PKG_NAME)
 
@@ -228,7 +230,7 @@ class AppTestRunner(TestRunner):
 
     def do_freshInstallApp(self, str_arg=''):
         """
-        sample implementation: remove and install app with the specified build number(optional).
+        remove and install app with the specified build number(optional).
         @param str_arg: the build number (optional)
         """
         if len(str_arg) > 0:
@@ -241,18 +243,19 @@ class AppTestRunner(TestRunner):
 
     def do_dragDownStatusBar(self, str_arg=''):
         """
-        sample implementation: drag to show the Android status bar
-        @param str_arg:
+        drag to show the Android Tray
         @return: result (boolean)
         """
         return self.do_drag("(%d,1), (%d,%d)" % (self.scn_width / 2, self.scn_width / 2, self.scn_height - 50))
 
     def do_testAppLog(self, str_arg=''):
         """
-        sample implementation: search app log for specified key words
+        search app log for specified key words
+        @param str_arg: key words (string)
+        @return: result (boolean)
         """
         tmpFn = "tmp.log"
-        self.pullFile('/data/data/%s/app_logs/log.txt' % APP_PKG_NAME, tmpFn)
+        self.pullFile(APPLOG_FILE_PATH, tmpFn)
         cmd = "tail -n 100 %s | grep '%s'" % (tmpFn, str_arg)
         output = self.sh.getShellCmdOutput(cmd)
         if str_arg in output:
@@ -260,54 +263,61 @@ class AppTestRunner(TestRunner):
         else:
             self.resultFlag = False
         remove(tmpFn)
+        return self.resultFlag
 
     def do_startApp(self, str_arg=''):
-        """ sample implementation """
+        """
+        launch the App
+        """
         printLog(self.threadName + "[running command 'startApp %s']" % str_arg)
         self.startApp(APP_LAUNCH_ACTIVITY)
         self.do_sleep('5')
 
     def do_stopApp(self, str_arg=''):
-        """ sample implementation """
+        """
+        force stop the App
+        """
         printLog(self.threadName + "[running command 'stopApp %s']" % str_arg)
         self.stopApp(APP_PKG_NAME)
 
     def do_removeAppLog(self, str_arg=''):
-        """ sample implementation """
+        """
+        remove the App's log file
+        """
         self.do_stopApp(str_arg)
-        self.removeFile(r'/data/data/%s/app_logs/log.txt' % APP_PKG_NAME)
+        self.removeFile(APPLOG_FILE_PATH)
 
     def do_makeNetworkBroken(self, str_arg=''):
-        """ sample implementation """
+        """
+        disable WiFi and mobile network connection
+        """
         self.disableWiFi()
-    #        self.disableMobileData()
+        self.disableMobileData()
 
     def do_makeNetworkBothConnected(self, str_arg=''):
-        """ sample implementation """
+        """
+        enable WiFi and mobile network connection
+        """
         self.enableWiFi()
-    #        self.enableMobileData()
+        self.enableMobileData()
 
     def do_makeNetworkWiFiConnected(self, str_arg=''):
-        """ sample implementation """
+        """
+        enable WiFi connection
+        """
         self.enableWiFi()
 
     def do_makeNetworkDataConnected(self, str_arg=''):
-        """ sample implementation """
+        """
+        disable WiFi and enable mobile network connection
+        """
         self.disableWiFi()
         self.enableMobileData()
 
-    def do_showNotificationCount(self, str_args):
-        """
-        sample implementation: for debug or assistance only
-        @param str_args:
-        @return: count (integer)
-        """
-        count = self.__getChildrenCount("id/card_holder_id")
-        printLog(self.threadName + 'There are %d notifications.' % count)
-        return count
-
     def do_removeNotification(self, str_arg=''):
-        """ sample implementation """
+        """
+        swipe to remove the first notification in Android Tray
+        """
         arg = '(%d,%d) (%d,%d)' % (
             int(self.scn_width * 0.1), 200, int(self.scn_width * 0.9), 200)
         self.do_drag(arg)
