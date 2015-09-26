@@ -14,8 +14,10 @@ except:
 
 from fw.androidviewclient.viewclient import ViewClient
 from fw.TestUtil import Shell
-from fw.TestRunner import TestCase
+from fw.TestRunner import TestCase, TestCasePool
 from fw.AppTestRunner import AppTestRunner
+
+DEBUG = True
 
 
 class TestDevice:
@@ -82,19 +84,21 @@ class testcase_debugger:
             print('List of devices:')
             for j in range(len(deviceIdList)):
                 print('%d: %s\n' % (j, deviceIdList[j]))
-        try:
-            # connect device
-            self.adbc, self.serial_no = ViewClient.connectToDeviceOrExit()
-            print 'device %s connected.' % self.serial_no
-            self.devices = self.adbc.getDevices()
-            for device in self.devices:
-                print device.serialno
-        except:
-            traceback.print_exc()
-            raise RuntimeError("cannot connect to device.")
+            try:
+                # connect device
+                self.adbc, self.serial_no = ViewClient.connectToDeviceOrExit(verbose=DEBUG, serialno=deviceIdList[0])
+                print 'device %s connected.' % self.serial_no
+                self.devices = self.adbc.getDevices()
+                for device in self.devices:
+                    print device.serialno
+            except:
+                traceback.print_exc()
+                raise RuntimeError("cannot connect to device.")
+        else:
+            raise RuntimeError("cannot find device.")
 
     def run(self, tc_file_path):
-        tr = AppTestRunner(10, [TestCase.fromFile(tc_file_path)], TestDevice(self.serial_no))
+        tr = AppTestRunner(10, TestCasePool.factory([TestCase.fromFile(tc_file_path)]), TestDevice(self.serial_no))
         tr.run()
 
 
@@ -107,4 +111,4 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     st = testcase_debugger()
-    st.run(args.suite)
+    st.run(args.testcase_file_path)

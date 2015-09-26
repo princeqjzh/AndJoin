@@ -112,7 +112,7 @@ class Tester:
             if not self.getBuild():
                 raise EnvironmentError('[Tester] Get build failed.')
         # build testcase pool
-        self.testPool = TestCasePool(self.test_suite)
+        self.testPool = TestCasePool.fromSuite(self.test_suite)
         """ testcase pool for current test run """
         if len(self.testPool) == 0:
             raise EnvironmentError('[Tester] NO TESTCASE IN THE TEST SUITE. QUIT.')
