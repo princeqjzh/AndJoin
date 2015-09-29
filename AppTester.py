@@ -217,9 +217,9 @@ class AppTester(Tester):
         @rtype list
         """
         # file_path = path.basename(APPLOG_FILE)
-        printLog('[scanExceptionInFile] Scanning file %s for exceptions...' % file_path, logging.INFO)
+        printLog('[scanExceptionInAppLog] Scanning file %s for exceptions...' % file_path, logging.INFO)
         # todo: remove dependency on grep for possible support on windows later on
-        exception_string = check_output(r'grep -n "Exception" log.txt', shell=True)
+        exception_string = check_output(r'grep -n "Exception" %s' % file_path, shell=True)
 
         # format the output
 
