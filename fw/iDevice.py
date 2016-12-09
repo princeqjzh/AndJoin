@@ -57,7 +57,7 @@ FETCH_DEVICEINFO_TIMEOUT = 5
 REPEAT_TIMES_ON_ERROR = 2
 DEFAULT_INTERVAL = 0.5
 
-DEBUG = True
+DEBUG = False
 
 
 class TimeoutException(Exception):
@@ -266,16 +266,17 @@ class iDevice(AdbClient):
         AdbClient.__init__(self, serialno=self.deviceId)
         # Connect to the current device
         self.__connect()
-        printLog(self.threadName + '[iDevice] Device %s init completed.' % self.deviceId, logging.DEBUG)
+        # printLog(self.threadName + '[iDevice] Device %s init completed.' % self.deviceId, logging.DEBUG)
 
     def __connect(self):
         """
         connect to device or exit
         @raise: EnvironmentError
         """
-        printLog(self.threadName + '[iDevice] Connecting to device %s...' % self.deviceId, logging.INFO)
+        if DEBUG:
+            printLog(self.threadName + '[iDevice] Connecting to device %s...' % self.deviceId, logging.INFO)
         try:
-            self.adbc, serialno = ViewClient.connectToDeviceOrExit(verbose=True, serialno=self.deviceId)
+            self.adbc, serialno = ViewClient.connectToDeviceOrExit(verbose=DEBUG, serialno=self.deviceId)
             # print 'Connected.'
             if self.adbc is None:
                 printLog(self.threadName + '[iDevice] Failed to connect to Device %s...' % self.deviceId, logging.ERROR)
@@ -283,12 +284,13 @@ class iDevice(AdbClient):
             # get phone's screen resolution, once connected, it is fixed
             self.scn_width = int(self.adbc.display['width'])
             self.scn_height = int(self.adbc.display['height'])
-            printLog(self.threadName + "[iDevice] Device %s's screen resolution is: %d * %d" % (
-                self.deviceId, self.scn_width, self.scn_height), logging.DEBUG)
+            # printLog(self.threadName + "[iDevice] Device %s's screen resolution is: %d * %d" % (
+            #     self.deviceId, self.scn_width, self.scn_height), logging.DEBUG)
             self.adbc.wake()
-            printLog(self.threadName + '[iDevice] Creating View Client... ', logging.DEBUG)
+            # printLog(self.threadName + '[iDevice] Creating View Client... ', logging.DEBUG)
             self.vc = ViewClient(self.adbc, serialno, autodump=False, forceviewserveruse=True)
-            printLog(self.threadName + '[iDevice] Device %s connected.' % self.deviceId, logging.INFO)
+            if DEBUG:
+                printLog(self.threadName + '[iDevice] Device %s connected.' % self.deviceId, logging.INFO)
             # self.resultFlag = True
         except Exception, e:
             printLog(self.threadName + "[iDevice] CANNOT connect to device %s. Please check the USB cable and "
@@ -368,6 +370,7 @@ class iDevice(AdbClient):
          2. id/card_holder_id(2,0,0,0,0,1)
          3. text/Show me
         @return: view object (View)
+        @rtype View
         """
         if iDevice.dump_view:
             self.__dumpview()
@@ -414,11 +417,13 @@ class iDevice(AdbClient):
             # printLog(self.threadName + '[__getChildView] could not find parent view %s' % parentId, logging.DEBUG)
             return None
         for index in childSeq:
-            printLog(self.threadName + '[__getChildView] searching child view: %s[%s]' % (pv.getId(), index),
-                     logging.DEBUG)
+            if DEBUG:
+                printLog(self.threadName + '[__getChildView] searching child view: %s[%s]' % (pv.getId(), index),
+                         logging.DEBUG)
             cv = pv.children[int(index)]
             if cv:
-                printLog(self.threadName + '[__getChildView] found child view: %s' % cv.getId(), logging.DEBUG)
+                if DEBUG:
+                    printLog(self.threadName + '[__getChildView] found child view: %s' % cv.getId(), logging.DEBUG)
                 pv = cv
             else:
                 # printLog(self.threadName + '[__getChildView] could not find child of %s' % pv.getId(), logging.DEBUG)
@@ -659,8 +664,8 @@ class iDevice(AdbClient):
             # get the target view
             tv = self.__getView(viewId)
             if tv:
-                printLog(self.threadName + 'Found view %s.' % viewId, logging.DEBUG)
-
+                if DEBUG:
+                    printLog(self.threadName + 'Found target view %s.' % viewId, logging.DEBUG)
                 if len(target_text) > 0:
                     # get element text, and compare it with the given text value
                     # tmpView=self.vc.findViewWithText(ret[1].strip())
@@ -720,7 +725,9 @@ class iDevice(AdbClient):
 
     def do_clickchild(self, str_arg):
         """
-        [obsoleted] click a certain child for one unique ID
+        [obsoleted]
+        This method is merged with 'click'. Kept here for backward compatibility.
+        click a certain child for one unique ID
         use it while there are multiple same name ID, but there is one unique root parent
 
         format: clickchild <root node ID> <child branch id list>
@@ -797,11 +804,11 @@ class iDevice(AdbClient):
                     # get the target view
                     tv = self.__getView(arg)
                     if tv:
-                        printLog('Found view %s.' % arg, logging.DEBUG)
                         if DEBUG:
+                            printLog('Found view %s.' % arg, logging.DEBUG)
                             printLog(self.threadName + 'tinyStr: %s' % tv.__tinyStr__(), logging.DEBUG)
-                            printLog(self.threadName + 'position and size: {}'.format(tv.getPositionAndSize()),
-                                     logging.DEBUG)
+                            # printLog(self.threadName + 'position and size: {}'.format(tv.getPositionAndSize()),
+                            #          logging.DEBUG)
                         printLog(self.threadName + '[clicking id %s...]' % arg, logging.DEBUG)
                         tv.touch()
                     else:
@@ -809,7 +816,7 @@ class iDevice(AdbClient):
                         self.resultFlag = False
                 return
             except Exception, e:
-                printLog(self.threadName + 'do_click: the %dst try failed due to %s, will retry.' % (tmp, e.message),
+                printLog(self.threadName + 'the %dst try failed due to %s, will retry.' % (tmp, e.message),
                          logging.ERROR)
                 # self.reconnect()
                 time.sleep(1)
@@ -984,8 +991,8 @@ class iDevice(AdbClient):
                 # get the target view
                 tv = self.__getView(view_id)
                 if tv:
-                    printLog('Found view %s.' % arg, logging.DEBUG)
                     if DEBUG:
+                        printLog('Found view %s.' % arg, logging.DEBUG)
                         print tv.__tinyStr__()
                         print tv.getPositionAndSize()
                     x, y = tv.getCenter()

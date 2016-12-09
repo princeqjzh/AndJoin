@@ -23,6 +23,7 @@ limitations under the License.
 from os import sep, path
 import logging
 import time
+import traceback
 from fw.TestUtil import printLog, TestStatus, H_LINE, SNAPSHOT_DIR, Shell, EXT_TEST_SUITE, TC_DIR, EXT_TEST_CASE
 from fw.iDevice import iDevice
 
@@ -165,10 +166,17 @@ class TestRunner(iDevice):
                 testcase.cmd = getFailedAction(testcase.steps, line_number)
                 testcase.errormsg = 'Error at Line %d: "%s"' % (testcase.cmd[0], testcase.cmd[1])
                 break
-            except (AttributeError, ValueError, IndexError, EnvironmentError), e:
-                testcase.errormsg = "Script AttributeError: %s" % e.message
+            except AttributeError, e:
+                testcase.errormsg = "%s. Please check if you have implemented the requested method, " \
+                                    "or if Tester.run() use the correct AppTestRunner class name." % e.message
                 printLog(self.threadName + testcase.errormsg, logging.ERROR)
                 self.resultFlag = False
+                break
+            except (ValueError, IndexError, EnvironmentError), e:
+                testcase.errormsg = "Script Error: %s" % e.message
+                printLog(self.threadName + testcase.errormsg, logging.ERROR)
+                self.resultFlag = False
+                traceback.print_exc()
                 break
         # for loop end
 
@@ -336,41 +344,65 @@ class TestCasePool(list):
     """
     a list of TestCase instances
     """
-    def __init__(self, suite):
+
+    @staticmethod
+    def factory(testcase_list):
         """
-        the constructor read the testcases included in the test suite file, and build a list of C{TestCase}s
-        @param suite: test suite name
+        the factory
+        @param testcase_list: list of C{TestCase} (list)
+
+        """
+        return TestCasePool(testcase_list)
+
+    @staticmethod
+    def fromSuite(suite):
+        """
+        the factory to read the testcases included in the test suite file, and build a list of C{TestCase}
+        @param suite: test suite name (String)
+        @return: a testcase pool
         @raise: ValueError
         """
-        list.__init__([])
-        testSuiteFile = suite + EXT_TEST_SUITE
+        ts_Filename = suite + EXT_TEST_SUITE
+        tc_list = []
         try:
-            propfile_path = path.abspath('') + sep + 'ts' + sep + testSuiteFile
+            propfile_path = path.abspath('') + sep + 'ts' + sep + ts_Filename
             printLog('Reading testcase from file %s...' % propfile_path, logging.DEBUG)
             with open(propfile_path) as fd:
                 content = filter(lambda x: not x.startswith('#') and not x.startswith('\n'), fd.readlines())
                 # print content
-                testlist = map(lambda x: [x.split(':', 1)[0].strip(), x.split(':', 1)[1].strip()], content)
+                test_name_list = map(lambda x: [x.split(':', 1)[0].strip(), x.split(':', 1)[1].strip()], content)
                 # print testlist
-                for test in testlist:
+                for test in test_name_list:
                     printLog('adding testcase %s to pool...' % test[0], logging.DEBUG)
-                    scptfilename = TC_DIR + '/' + test[0] + EXT_TEST_CASE
+                    tc_filepath = TC_DIR + '/' + test[0] + EXT_TEST_CASE
                     # dirName, tcName=scptfilename.split('/')
                     try:
                         # with open(scptfilename) as sf:
                         #     lines = map(lambda x: x.strip().strip('\t'), sf.readlines())
-                        self.append(TestCase.fromFile(scptfilename, tc_name=test[0], desc=test[1]))
+                        tc_list.append(TestCase.fromFile(tc_filepath, tc_name=test[0], desc=test[1]))
                     except IOError, e:
-                        printLog("Error open/read file %s: %s" % (scptfilename, e.message), logging.ERROR)
-                        raise IOError(e.message)
-                    except AssertionError:
-                        raise ValueError("Missing or bad step value in %s." % scptfilename)
+                        # printLog("Error open/read file %s: %s" % (scptfilename, e.message), logging.ERROR)
+                        raise EnvironmentError("Error open/read file '%s'" % tc_filepath)
+                    except ValueError:
+                        raise EnvironmentError("Missing or bad section value in '%s', Please make sure "
+                                               "@TITLE, @DESC, @SETUP, @VALIDATION and @TEARDOWN are included."
+                                               % tc_filepath)
+            return TestCasePool(tc_list)
         except IOError:
-            printLog('File %s open error.' % testSuiteFile, logging.ERROR)
-            raise ValueError('Failed to open/read suite file.')
+            # printLog('File %s open error.' % testSuiteFile, logging.ERROR)
+            raise EnvironmentError("Failed to open/read suite file '%s'" % ts_Filename)
         except IndexError, e:
-            printLog('File %s format error: %s' % (testSuiteFile, e.message), logging.ERROR)
-            raise ValueError('Failed to read testcase.')
+            # printLog('File %s format error: %s' % (testSuiteFile, e.message), logging.ERROR)
+            raise EnvironmentError("Failed to read testcase from '%s'" % ts_Filename)
+
+    def __init__(self, testcase_list):
+        """
+        the constructor
+        @param testcase_list: list of C{TestCase} (list)
+
+        """
+        list.__init__([])
+        self.extend(testcase_list)
         printLog('%d testcase read...' % len(self))
 
     def getTestCase(self):

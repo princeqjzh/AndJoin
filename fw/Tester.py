@@ -112,7 +112,7 @@ class Tester:
             if not self.getBuild():
                 raise EnvironmentError('[Tester] Get build failed.')
         # build testcase pool
-        self.testPool = TestCasePool(self.test_suite)
+        self.testPool = TestCasePool.fromSuite(self.test_suite)
         """ testcase pool for current test run """
         if len(self.testPool) == 0:
             raise EnvironmentError('[Tester] NO TESTCASE IN THE TEST SUITE. QUIT.')
@@ -209,7 +209,7 @@ class Tester:
             return ''
 
         ALTList = []
-        LT_RE = re.compile("^I/ActivityManager\(\s*\d+\): Displayed {}/(\S+): \+(\S+)$".format(APP_PKG_NAME))
+        LT_RE = re.compile("^I/ActivityManager\(\s*\d+\): Displayed {}/(\S+): \+(\S+)\s*$".format(APP_PKG_NAME))
 
         try:
             with open(ADBLOG_FILE, 'r') as fd:
@@ -246,7 +246,8 @@ class Tester:
         printLog('Start capture adb logcat ...')
         # redirect to local drive would generate error: /system/bin/sh: can't create logcat.log: Read-only file system
         # using the android file system path would solve the problem
-        child = Popen(['adb', 'logcat', '>', '/data/data/%s' % ADBLOG_FILE])
+        # child = Popen(['adb', 'logcat', '>', '/data/data/%s' % ADBLOG_FILE])
+        child = Popen('adb logcat 2>&1 > %s' % ADBLOG_FILE, shell=True)
         # truncate file after 3 seconds to get rid of old logs
         time.sleep(3)
         self.shell.truncate_file(ADBLOG_FILE)
@@ -264,7 +265,8 @@ class Tester:
         self.testPool.printTestResult()
         # stop logcat capture and get activity launch time
         child.terminate()
-        if tr.pullFile('/data/data/{}'.format(ADBLOG_FILE)) == 0:
+        # if tr.pullFile('/data/data/{}'.format(ADBLOG_FILE)) == 0:
+        if path.isfile(ADBLOG_FILE):
             self.ALTList = Tester.getLaunchTime(ADBLOG_FILE)
         # scan app log and get any exception
         if len(APPLOG_FILE) > 0:

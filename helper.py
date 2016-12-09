@@ -4,7 +4,7 @@ __author__ = 'innopath'
 
 def printMethodAndDoc(cls, methods):
     for i in range(len(methods)):
-        print "%d:\t%s" % (i+1, methods[i][3:])
+        print "## %d.\t%s" % (i+1, methods[i][3:])
         doc = getattr(cls, methods[i]).__doc__
         if doc:
             print doc
@@ -26,21 +26,21 @@ if __name__ == "__main__":
         if key.startswith('do_'):
             iDeviceMethods.append(key)
 
+    if len(iDeviceMethods) > 0:
+        iDeviceMethods.sort()
+        print "\n# Predefined Device Operate functions"
+        printMethodAndDoc(iDevice, iDeviceMethods)
+    # for i in range(len(iDeviceMethods)):
+    #     print "%d:\t%s" % (i+1, iDeviceMethods[i][3:])
+    #     print getattr(iDevice, iDeviceMethods[i]).__doc__
+
     if len(AppTestRunnerMethods) > 0:
         AppTestRunnerMethods.sort()
 
         # print getattr(iDevice, iDeviceMethods[10]).__doc__
         # exec "print iDevice." + iDeviceMethods[10] + ".__doc__"
-        print "\nAvailable test functions:"
+        print "\n# Predefined Test functions (You may add more to your needs)"
         printMethodAndDoc(AppTestRunner, AppTestRunnerMethods)
     # for i in range(len(AppTestRunnerMethods)):
     #     print "%d:\t%s" % (i+1, AppTestRunnerMethods[i][3:])
     #     print getattr(AppTestRunner, AppTestRunnerMethods[i]).__doc__
-
-    if len(iDeviceMethods) > 0:
-        iDeviceMethods.sort()
-        print "\nAvailable device operate functions:"
-        printMethodAndDoc(iDevice, iDeviceMethods)
-    # for i in range(len(iDeviceMethods)):
-    #     print "%d:\t%s" % (i+1, iDeviceMethods[i][3:])
-    #     print getattr(iDevice, iDeviceMethods[i]).__doc__
